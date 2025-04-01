@@ -1,0 +1,27 @@
+{% extends 'scheduler/index.html' %}
+
+{% block title %} Update Scheduled Message {% endblock %}
+
+{% block content %}
+    <h1>Update Scheduled Message</h1>
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <label>Phone Number:</label><br>
+        <input type="text" name="phone_number" value="{{ message.phone_number }}"><br><br>
+        <label>Message:</label><br>
+        <textarea name="message" rows="4" cols="50">{{ message.message }}</textarea><br><br>
+        <label>Send Time (HH):</label>
+        <input type="number" name="send_hour" min="0" max="23" value="{{ message.send_hour }}"><br><br>
+        <label>Send Time (MM):</label>
+        <input type="number" name="send_minute" min="0" max="59" value="{{ message.send_minute }}"><br><br>
+        <button type="submit">Update Message</button>
+    </form>
+    <a href="{% url 'view_scheduled' %}">Back to Scheduled Messages</a>
+{% endblock %}

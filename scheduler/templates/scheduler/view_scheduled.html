@@ -1,0 +1,263 @@
+{% extends 'scheduler/index.html' %}
+
+{% block title %}View Scheduled Messages{% endblock %}
+
+{% block content %}
+
+<style>
+    /* Additional styles specific to the scheduled messages page */
+    .table-container {
+        overflow-x: auto;
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .messages-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .messages-table th {
+        background-color: #f9fafb;
+        font-weight: 600;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .messages-table td {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+    }
+
+    .messages-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .messages-table tr:hover {
+        background-color: rgba(37, 211, 102, 0.05);
+    }
+
+    .message-content {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .status {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    .status.sent {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .status.pending {
+        background-color: rgba(234, 179, 8, 0.1);
+        color: #B45309;
+    }
+
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--text-light);
+    }
+
+    .empty-state svg {
+        margin-bottom: 1rem;
+    }
+
+    .empty-state p {
+        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+    }
+
+    .button {
+        display: inline-block;
+        background-color: var(--primary);
+        color: white;
+        font-weight: 500;
+        padding: 0.625rem 1.25rem;
+        border-radius: 8px;
+        text-decoration: none;
+        transition: background-color 0.2s ease;
+    }
+
+    .button:hover {
+        background-color: var(--primary-dark);
+    }
+
+    @media (max-width: 640px) {
+
+        .messages-table th:nth-child(2),
+        .messages-table td:nth-child(2) {
+            display: none;
+        }
+    }
+
+        /* Add these styles for action buttons */
+    .action-cell {
+        white-space: nowrap;
+        width: 1%;
+    }
+    
+    .action-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: var(--text-light);
+    }
+    
+    .action-button:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .action-button.edit:hover {
+        color: var(--accent);
+    }
+    
+    .action-button.delete:hover {
+        color: var(--error);
+    }
+    
+    .action-button svg {
+        width: 16px;
+        height: 16px;
+    }
+    
+    /* Add this for action menu on mobile */
+    @media (max-width: 640px) {
+        .action-cell {
+            display: table-cell !important;
+        }
+    }
+</style>
+
+
+
+<div class="card">
+    <div class="header">
+        <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary);">
+            <path d="M12 8v4l3 3m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"></path>
+        </svg>
+        <h1>Scheduled Messages</h1>
+    </div>
+
+    {% if scheduled_messages %}
+    <div class="table-container">
+        <table class="messages-table">
+            <!-- In your table head, add a new column -->
+            <thead>
+                <tr>
+                    <th>Phone Number</th>
+                    <th>Message</th>
+                    <th>Send Time</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            
+            <!-- In your table body, add the actions cell for each row -->
+            <tbody>
+                {% for message in scheduled_messages %}
+                <tr>
+                    <td>{{ message.phone_number }}</td>
+                    <td class="message-content">{{ message.message }}</td>
+                    <td>{{ message.send_hour }}:{% if message.send_minute < 10 %}0{% endif %}{{ message.send_minute}}</td>
+                    <td>
+                        {% if message.sent %}
+                        <span class="status sent">Sent</span>
+                        {% else %}
+                        <span class="status pending">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-cell">
+                        {% if not message.sent %}
+                        <a href="{% url 'update_scheduled' message.id %}" class="action-button edit" title="Edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </a>
+                        <form method="post" action="{% url 'delete_scheduled' message.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="action-button delete" title="Delete"
+                                onclick="return confirm('Are you sure you want to delete this message?');">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="action-button" style="cursor: not-allowed; opacity: 0.3;">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5 5 4 4 0 0 1-5-5 4 4 0 0 1 5-5 4 4 0 0 1 5 5"></path>
+                            </svg>
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"
+            style="color: var(--text-light);">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        <p>No scheduled messages yet</p>
+        <a href="{% url 'index' %}" class="button">Schedule Your First Message</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="nav-links">
+    <a href="{% url 'index' %}" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12h14"></path>
+        </svg>
+        Schedule New Message
+    </a>
+    <a href="{% url 'account' %}" class="nav-link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="7" r="4"></circle>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+        </svg>
+        Account
+    </a>
+</div>
+
+{% endblock %}
